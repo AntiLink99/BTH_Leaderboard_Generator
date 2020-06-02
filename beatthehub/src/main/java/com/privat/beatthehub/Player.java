@@ -1,0 +1,97 @@
+package com.privat.beatthehub;
+
+import java.util.ArrayList;
+
+public class Player {
+
+    private String username;
+    private ArrayList<Integer> actualRanks;
+    private ArrayList<Integer> filteredRanks; // qualified only
+    private double averageActualRank = -1;
+    private double filteredAverageRank = -1;
+    private ArrayList<ScoreSubmission> bestScores = new ArrayList<ScoreSubmission>();
+    private long totalScore = 0;
+    private double averageAcc = 0;
+
+    public Player(String username, ArrayList<Integer> ranks) {
+        this.username = username;
+        this.actualRanks = ranks;
+        this.averageActualRank = calculateAverage(ranks);
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
+    }
+
+    public ArrayList<Integer> getRanks() {
+        return actualRanks;
+    }
+
+    public void setRanks(ArrayList<Integer> ranks) {
+        this.actualRanks = ranks;
+    }
+
+    public double getAverageRank() {
+        return averageActualRank;
+    }
+
+    public void setAverageRank(double averageRank) {
+        this.averageActualRank = averageRank;
+    }
+
+    public ArrayList<Integer> getFilteredRanks() {
+        return filteredRanks;
+    }
+
+    public void setFilteredRanks(ArrayList<Integer> filteredRanks) {
+        this.filteredRanks = filteredRanks;
+        if (filteredRanks != null) {
+            this.filteredAverageRank = calculateAverage(filteredRanks);
+        }
+    }
+
+    public double getFilteredAverageRank() {
+        return filteredAverageRank;
+    }
+
+    public void setFilteredAverageRank(double filteredAverageRank) {
+        this.filteredAverageRank = filteredAverageRank;
+    }
+
+    private double calculateAverage(ArrayList<Integer> values) {
+        return Double.valueOf(values.stream().mapToInt(Integer::intValue).sum()) / values.size();
+    }
+
+    public long getTotalScore() {
+        return totalScore;
+    }
+
+    private void addToTotalScore(long score) {
+        this.totalScore += score;
+    }
+
+    public double getAverageAcc() {
+        return averageAcc;
+    }
+
+    public void setAverageAcc(double averageAcc) {
+        this.averageAcc = averageAcc;
+    }
+
+    public void addToBestScores(ScoreSubmission sm) {
+        bestScores.add(sm);
+        addToTotalScore(sm.getScore());
+    }
+
+    public ArrayList<ScoreSubmission> getBestScores() {
+        return bestScores;
+    }
+
+    public boolean isQualified() {
+        return actualRanks.size() == 6;
+    }
+}
