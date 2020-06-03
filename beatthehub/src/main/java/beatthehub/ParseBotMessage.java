@@ -27,6 +27,7 @@ public class ParseBotMessage {
 
 	final static String OUTPUT_FILEPATH = "leaderboard\\";
 	final static String FILENAME = "Unofficial_BeatTheHub_Leaderboard";
+	
     final static String LINE = "-------------------------------------------------------------------------------------------";
 	
     public static void main(String[] args) throws IOException {
