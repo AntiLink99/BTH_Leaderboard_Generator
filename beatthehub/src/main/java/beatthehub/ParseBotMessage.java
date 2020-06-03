@@ -25,12 +25,17 @@ import beatthehub.pdf.TxtToPdf;
 
 public class ParseBotMessage {
 
-	final static String OUTPUT_FILEPATH = "leaderboard\\";
+	static String OUTPUT_FILEPATH = "leaderboard"+File.separator;
 	final static String FILENAME = "Unofficial_BeatTheHub_Leaderboard";
+	
     final static String LINE = "-------------------------------------------------------------------------------------------";
 	
     public static void main(String[] args) throws IOException {
-        
+
+    	if (args.length > 0) {
+    		OUTPUT_FILEPATH = args[0];
+    	}
+    	
     	TournamentAPI tapi = new TournamentAPI();
     	tapi.fetchAPIData();
         
@@ -322,9 +327,7 @@ public class ParseBotMessage {
 			System.out.println("The .txt file could not be converted to .pdf");
 			e.printStackTrace();
 		}
-        System.out.println(file.getName()+" was converted to .pdf successfully!");
-        file.delete();
-        
+        System.out.println(file.getName()+" was converted to .pdf successfully!");        
         System.exit(0);
     }
 
