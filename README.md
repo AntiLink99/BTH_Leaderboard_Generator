@@ -1,6 +1,7 @@
 # BTH_Leaderboard_Generator
 Simple Java application that parses discord messages by the moon tournament bot and creates a .txt leaderboard
 
-To parse the input.txt, run ParseBotMessage.java
+To get the current leaderboard, just run Fetch_BeatTheHub_Leaderboard.jar!
+It will create a "leaderboard" folder which contains the generated .pdf.
 
-You might want to set the argument "-Djava.util.Arrays.useLegacyMergeSort=true" in your JVM for the program to work properly.
+Have fun!
