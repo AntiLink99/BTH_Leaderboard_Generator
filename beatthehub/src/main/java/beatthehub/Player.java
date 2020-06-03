@@ -1,10 +1,11 @@
-package com.privat.beatthehub;
+package beatthehub;
 
 import java.util.ArrayList;
 
 public class Player {
-
-    private String username;
+	
+    private String player;
+    private String group;
     private ArrayList<Integer> actualRanks;
     private ArrayList<Integer> filteredRanks; // qualified only
     private double averageActualRank = -1;
@@ -13,18 +14,18 @@ public class Player {
     private long totalScore = 0;
     private double averageAcc = 0;
 
-    public Player(String username, ArrayList<Integer> ranks) {
-        this.username = username;
+    public Player(String player, ArrayList<Integer> ranks) {
+        this.player = player;
         this.actualRanks = ranks;
         this.averageActualRank = calculateAverage(ranks);
     }
 
     public String getUsername() {
-        return username;
+        return player;
     }
 
-    public void setUsername(String username) {
-        this.username = username;
+    public void setUsername(String player) {
+        this.player = player;
     }
 
     public ArrayList<Integer> getRanks() {
@@ -94,4 +95,12 @@ public class Player {
     public boolean isQualified() {
         return actualRanks.size() == 6;
     }
+
+	public String getGroup() {
+		return group;
+	}
+
+	public void setGroup(String group) {
+		this.group = group;
+	}
 }
