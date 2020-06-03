@@ -51,7 +51,7 @@ public class TournamentAPI {
 			
 			for (ScoreSubmission sm : submissions) {
 				sm.setSong(song.getSongName());
-				sm.setUsername(sm.getUsername().replace("Ryan🎉", "Ryan").replace("אל מטדור", "??????")); //TODO find Regexes
+				sm.setUsername(replaceSymbols(sm.getUsername()));
 				sm.setSongNotecount(info.getSongNotecount(song.getSongName()));
 			}			
 			fetchedScoreSubmissions.addAll(submissions);
@@ -59,6 +59,10 @@ public class TournamentAPI {
 		this.submissionsBySongName = fetchedScoreSubmissions;
 	}
 
+	public String replaceSymbols(String str) {
+		return str.replaceAll("[^\\x00-\\x7F]", "?");
+	}
+	
 	private String getSongUrl(String song) {
 		return leaderboardPrefix+info.getSongHash(song)+"/"+info.getSongDifficulty(song)+"/"+leaderboardSuffix;
 	}
