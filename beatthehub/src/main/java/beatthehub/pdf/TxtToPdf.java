@@ -26,7 +26,7 @@ public class TxtToPdf {
 		  .setPdfVersion(PdfWriter.PDF_VERSION_1_7);
 		pdfDoc.open();
 		
-		BaseFont base = BaseFont.createFont("src/main/resources/Consolas.ttf", BaseFont.CP1250,false);
+		BaseFont base = BaseFont.createFont("src/main/resources/Consolas.ttf", BaseFont.IDENTITY_H,false);
 		Font font = new Font(base);
 		
 		font.setStyle(Font.NORMAL);

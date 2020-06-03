@@ -323,9 +323,7 @@ public class ParseBotMessage {
 			System.out.println("The .txt file could not be converted to .pdf");
 			e.printStackTrace();
 		}
-        System.out.println(file.getName()+" was converted to .pdf successfully!");
-        file.delete();
-        
+        System.out.println(file.getName()+" was converted to .pdf successfully!");        
         System.exit(0);
     }
 
