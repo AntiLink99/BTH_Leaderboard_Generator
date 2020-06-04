@@ -5,6 +5,10 @@ import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
 import java.time.LocalDateTime;
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.time.ZoneOffset;
+import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -147,7 +151,8 @@ public class ParseBotMessage {
         
         //Build metadata
         String metadata = "";
-        metadata += "Parsed on "+LocalDateTime.now().format(DateTimeFormatter.ofPattern("dd.MM HH:mm"))+" (CET)";
+        OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
+        metadata += "Parsed on "+utc.format(DateTimeFormatter.ofPattern("dd.MM HH:mm"))+" (UTC)";
         metadata += fixedLength("",45)+"Made by AntiLink99#1337\n";
         metadata += "\nTotal scores: "+submissions.size();
         metadata += "\nPlayers: "+players.size();

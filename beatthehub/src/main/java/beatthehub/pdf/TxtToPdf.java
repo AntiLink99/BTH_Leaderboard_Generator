@@ -26,7 +26,7 @@ public class TxtToPdf {
 		  .setPdfVersion(PdfWriter.PDF_VERSION_1_7);
 		pdfDoc.open();
 		
-		BaseFont emoji = BaseFont.createFont("/Consolas.ttf", BaseFont.IDENTITY_H,false);
+		BaseFont emoji = BaseFont.createFont("src/main/resources/Consolas.ttf", BaseFont.IDENTITY_H,false);
 		Font font = new Font(emoji);
 		
 		font.setStyle(Font.NORMAL);
