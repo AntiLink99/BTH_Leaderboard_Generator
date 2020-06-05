@@ -7,7 +7,7 @@ public class Player {
     private String player;
     private String group;
     private ArrayList<Integer> actualRanks;
-    private ArrayList<Integer> filteredRanks; // qualified only
+    private ArrayList<Integer> filteredRanks; // participating only
     private double averageActualRank = -1;
     private double filteredAverageRank = -1;
     private ArrayList<ScoreSubmission> bestScores = new ArrayList<ScoreSubmission>();
@@ -92,7 +92,7 @@ public class Player {
         return bestScores;
     }
 
-    public boolean isQualified() {
+    public boolean isParticipating() {
         return actualRanks.size() == 6;
     }
 

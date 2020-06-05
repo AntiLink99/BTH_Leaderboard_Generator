@@ -4,11 +4,8 @@ import java.io.File;
 import java.io.IOException;
 import java.text.DecimalFormat;
 import java.text.DecimalFormatSymbols;
-import java.time.LocalDateTime;
 import java.time.OffsetDateTime;
-import java.time.ZoneId;
 import java.time.ZoneOffset;
-import java.time.ZonedDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -101,7 +98,7 @@ public class ParseBotMessage {
             List<ScoreSubmission> songSubmissions = set.getValue();
             songSubmissions = songSubmissions.stream().filter(sm -> 
                 players.stream().anyMatch(p ->
-                    p.getUsername().equals(sm.getUsername()) && p.isQualified()))
+                    p.getUsername().equals(sm.getUsername()) && p.isParticipating()))
                     .collect(Collectors.toList());
             
             for (ScoreSubmission sm : songSubmissions) {
@@ -134,7 +131,7 @@ public class ParseBotMessage {
         
         //Set average accuracy for every player
         for (Player p : players) {
-            if (p.isQualified()) {
+            if (p.isParticipating()) {
                 ArrayList<ScoreSubmission> bestScores = p.getBestScores();
                 double averageAcc = bestScores.stream().mapToDouble(sm -> Double.valueOf(sm.getAccuracy())).sum() / 6;
                 p.setAverageAcc(averageAcc);
@@ -143,8 +140,8 @@ public class ParseBotMessage {
 
         long groupACount = players.stream().filter(p -> p.getGroup().equals("A")).count();
         long groupAACount = players.stream().filter(p -> p.getGroup().equals("AA")).count();
-        long groupAQualifiedCount = players.stream().filter(p -> p.getGroup().equals("A") && p.isQualified()).count();
-        long groupAAQualifiedCount = players.stream().filter(p -> p.getGroup().equals("AA") && p.isQualified()).count();
+        long groupAParticipatingCount = players.stream().filter(p -> p.getGroup().equals("A") && p.isParticipating()).count();
+        long groupAAParticipatingCount = players.stream().filter(p -> p.getGroup().equals("AA") && p.isParticipating()).count();
         
         //Build leaderboard        
         String output = "";
@@ -156,14 +153,14 @@ public class ParseBotMessage {
         metadata += fixedLength("",45)+"Made by AntiLink99#1337\n";
         metadata += "\nTotal scores: "+submissions.size();
         metadata += "\nPlayers: "+players.size();
-        metadata += "\nQualified players: "+players.stream().filter(p -> p.isQualified()).collect(Collectors.toList()).size();
+        metadata += "\nParticipating players: "+players.stream().filter(p -> p.isParticipating()).collect(Collectors.toList()).size();
         
         metadata += "\n\nPlayers in group A: "+groupACount;
-        metadata += "\nQualified players in group A: "+groupAQualifiedCount;
+        metadata += "\nParticipating players in group A: "+groupAParticipatingCount;
         metadata += "\n\nPlayers in group AA: "+groupAACount;
-        metadata += "\nQualified players in group AA: "+groupAAQualifiedCount;
+        metadata += "\nParticipating players in group AA: "+groupAAParticipatingCount;
         
-        metadata += "\n\n(You are qualified if you have played all the qualifier maps.)";
+        metadata += "\n\n(You are participating if you have played all the qualifier maps.)";
         metadata += "\n\nMR = Mixed rank";
         metadata += "\nGR = Group rank";
         output += metadata;
@@ -176,7 +173,7 @@ public class ParseBotMessage {
 	        +fixedLength("Player",30)
 	        +fixedLength("Score",12)
 	        +fixedLength("Group",8)
-	        +"IsQualified";
+	        +"IsParticipating";
         
         sortByTotalScore(players);
         for (Player player : players) {
@@ -194,13 +191,13 @@ public class ParseBotMessage {
                 +fixedLength(username,30)
                 +fixedLength(String.valueOf(totalScore),12)
                 +fixedLength(player.getGroup(),8)
-                +(player.isQualified() ? "Qualified" : "");
+                +(player.isParticipating() ? "Participating" : "");
         }
         output += totalScoreInfo;
         
         //Average accuracy
         String averageAccuracyInfo = "";
-        averageAccuracyInfo += header("Average accuracy (Qualified only)");
+        averageAccuracyInfo += header("Average accuracy (Participating only)");
         averageAccuracyInfo += "\n"+fixedLength("MR",9)
 	    	+fixedLength("GR",9)
 	        +fixedLength("Player",30)
@@ -231,9 +228,9 @@ public class ParseBotMessage {
         output += averageAccuracyInfo;
         
         
-        //Average rank [Qualified]
+        //Average rank [Participating]
         String averageInfo = "";
-        averageInfo += header("Average rank (Qualified only)");
+        averageInfo += header("Average rank (Participating only)");
         averageInfo += "\n"+fixedLength("MR",9)
 	    	+fixedLength("GR",9)
 	        +fixedLength("Player",27)
@@ -244,7 +241,7 @@ public class ParseBotMessage {
         for (Player player : players) {
             String username = player.getUsername();
             ArrayList<Integer> ranks = player.getFilteredRanks();
-            if (ranks == null || !player.isQualified()) {
+            if (ranks == null || !player.isParticipating()) {
                 continue;
             }
             double filteredAverageRank = player.getFilteredAverageRank();
@@ -283,7 +280,7 @@ public class ParseBotMessage {
                 +fixedLength(username,27)
                 +fixedLength(formatRankedList(ranks,rankListFormat),40)
                 +fixedLength(player.getGroup(),5)
-                +(player.isQualified() ? "Q" : "");
+                +(player.isParticipating() ? "P" : "");
         }        
         output += averageInfo;
         
@@ -344,10 +341,10 @@ public class ParseBotMessage {
     
     private static void sortByFilteredAverageRank(ArrayList<Player> players) {
         Comparator<Player> compareByFilteredAverage = (Player p1, Player p2) -> {
-        	if (!p1.isQualified()) {
+        	if (!p1.isParticipating()) {
         		return 1;
         	}
-        	else if (!p2.isQualified()) {
+        	else if (!p2.isParticipating()) {
         		return -1;
         	}
         	else if(p1.getFilteredAverageRank() > p2.getFilteredAverageRank()) {
