@@ -21,8 +21,9 @@ import org.apache.commons.io.FileUtils;
 
 import com.itextpdf.text.DocumentException;
 
-import beatthehub.api.TournamentAPI;
 import beatthehub.pdf.TxtToPdf;
+import beatthehub.scoresaberapi.ScoreSaberAPI;
+import beatthehub.tournamentapi.TournamentAPI;
 
 public class ParseBotMessage {
 
@@ -37,6 +38,7 @@ public class ParseBotMessage {
     		OUTPUT_FILEPATH = args[0];
     	}
     	
+        ScoreSaberAPI sapi = new ScoreSaberAPI();
     	TournamentAPI tapi = new TournamentAPI();
     	tapi.fetchAPIData();
         
@@ -159,6 +161,29 @@ public class ParseBotMessage {
         metadata += "\nParticipating players in group A: "+groupAParticipatingCount;
         metadata += "\n\nPlayers in group AA: "+groupAACount;
         metadata += "\nParticipating players in group AA: "+groupAAParticipatingCount;
+        
+        int medianScoreSaberRank = -1;
+        sortByAverageAccuracy(players);
+        for (int i = 0; i < 64; i++) {
+        	List<Integer> scoreSaberRanks = players.subList(0, 63).stream().map(p -> {
+				try {
+					System.out.println(p.getUsername());
+					return sapi.getScoreSaberRank(p.getUsername());
+				} catch (IOException e) {
+					e.printStackTrace();
+				}
+				return -1;
+			}).collect(Collectors.toList());
+        	Collections.sort(scoreSaberRanks);
+        	if (scoreSaberRanks.size() % 2 == 0) {
+        		medianScoreSaberRank = (scoreSaberRanks.get(scoreSaberRanks.size()/2) 
+        				+ scoreSaberRanks.get(scoreSaberRanks.size()/2-1)) / 2;
+        	}
+        	else {
+        		medianScoreSaberRank = scoreSaberRanks.get(scoreSaberRanks.size()/2);
+        	}
+        }
+        metadata += "\n\n Median qualified ScoreSaber rank:"+medianScoreSaberRank;
         
         metadata += "\n\n(You are participating if you have played all the qualifier maps.)";
         metadata += "\n\nMR = Mixed rank";
@@ -329,7 +354,7 @@ public class ParseBotMessage {
 			System.out.println("The .txt file could not be converted to .pdf");
 			e.printStackTrace();
 		}
-        System.out.println(file.getName()+" was converted to .pdf successfully!");        
+        System.out.println(file.getName()+" was converted to .pdf successfully!");
         System.exit(0);
     }
 

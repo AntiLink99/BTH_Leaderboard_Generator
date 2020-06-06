@@ -1,4 +1,4 @@
-package beatthehub.api;
+package beatthehub.tournamentapi;
 
 import java.lang.reflect.Type;
 import java.util.ArrayList;
