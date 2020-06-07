@@ -1,4 +1,4 @@
-package beatthehub.api;
+package beatthehub.tournamentapi;
 
 public class Song {
 

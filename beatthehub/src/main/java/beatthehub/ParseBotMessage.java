@@ -21,13 +21,17 @@ import org.apache.commons.io.FileUtils;
 
 import com.itextpdf.text.DocumentException;
 
-import beatthehub.api.TournamentAPI;
 import beatthehub.pdf.TxtToPdf;
+import beatthehub.scoresaberapi.ScoreSaberAPI;
+import beatthehub.tournamentapi.TournamentAPI;
 
 public class ParseBotMessage {
 
 	static String OUTPUT_FILEPATH = "leaderboard"+File.separator;
 	final static String FILENAME = "Unofficial_BeatTheHub_Leaderboard";
+	
+	static ScoreSaberAPI sapi;
+	static TournamentAPI tapi;
 	
     final static String LINE = "-------------------------------------------------------------------------------------------";
 	
@@ -37,7 +41,10 @@ public class ParseBotMessage {
     		OUTPUT_FILEPATH = args[0];
     	}
     	
-    	TournamentAPI tapi = new TournamentAPI();
+        sapi = new ScoreSaberAPI();
+        sapi.loadDiscordScoreSaberMapping();
+        
+    	tapi = new TournamentAPI();
     	tapi.fetchAPIData();
         
         DecimalFormatSymbols seperator = new DecimalFormatSymbols(Locale.GERMAN);
@@ -138,10 +145,10 @@ public class ParseBotMessage {
             }
         }
 
-        long groupACount = players.stream().filter(p -> p.getGroup().equals("A")).count();
-        long groupAACount = players.stream().filter(p -> p.getGroup().equals("AA")).count();
-        long groupAParticipatingCount = players.stream().filter(p -> p.getGroup().equals("A") && p.isParticipating()).count();
-        long groupAAParticipatingCount = players.stream().filter(p -> p.getGroup().equals("AA") && p.isParticipating()).count();
+        long groupACount = filterA(players).size();
+        long groupAACount = filterAA(players).size();
+        long groupAParticipatingCount = filterIsParticipating(filterA(players)).size();
+        long groupAAParticipatingCount = filterIsParticipating(filterAA(players)).size();
         
         //Build leaderboard        
         String output = "";
@@ -153,12 +160,21 @@ public class ParseBotMessage {
         metadata += fixedLength("",45)+"Made by AntiLink99#1337\n";
         metadata += "\nTotal scores: "+submissions.size();
         metadata += "\nPlayers: "+players.size();
-        metadata += "\nParticipating players: "+players.stream().filter(p -> p.isParticipating()).collect(Collectors.toList()).size();
+        metadata += "\nParticipating players: "+filterIsParticipating(players).size();
         
         metadata += "\n\nPlayers in group A: "+groupACount;
         metadata += "\nParticipating players in group A: "+groupAParticipatingCount;
         metadata += "\n\nPlayers in group AA: "+groupAACount;
         metadata += "\nParticipating players in group AA: "+groupAAParticipatingCount;
+      
+        sortByAverageAccuracy(players);        
+    	List<Integer> scoreSaberRanksA = getScoreSaberRanks(filterA(players).subList(0, 63));
+    	Collections.sort(scoreSaberRanksA);    	
+    	List<Integer> scoreSaberRanksAA = getScoreSaberRanks(filterAA(players).subList(0, 31));
+    	Collections.sort(scoreSaberRanksAA);
+    	
+        metadata += "\n\nMedian ScoreSaber rank of qualified players in group A: "+getMedianOfIntegers(scoreSaberRanksA);
+        metadata += "\nMedian ScoreSaber rank of qualified players in group AA: "+getMedianOfIntegers(scoreSaberRanksAA);
         
         metadata += "\n\n(You are participating if you have played all the qualifier maps.)";
         metadata += "\n\nMR = Mixed rank";
@@ -329,7 +345,7 @@ public class ParseBotMessage {
 			System.out.println("The .txt file could not be converted to .pdf");
 			e.printStackTrace();
 		}
-        System.out.println(file.getName()+" was converted to .pdf successfully!");        
+        System.out.println(file.getName()+" was converted to .pdf successfully!");
         System.exit(0);
     }
 
@@ -390,4 +406,37 @@ public class ParseBotMessage {
         return fixedLength("[ #"+ranks.stream().map(rank -> 
             format.format(rank)).collect(Collectors.joining(", #")),36)+" ]";        
     }
+    
+	private static int getMedianOfIntegers(List<Integer> values) {
+    	if (values.size() % 2 == 0) {
+    		return (values.get(values.size() / 2) 
+    				+ values.get(values.size() / 2 - 1)) / 2;
+    	}
+		return values.get(values.size() / 2);		
+	}
+	
+	private static List<Integer> getScoreSaberRanks(List<Player> players) {		
+		List<Integer> scoreSaberRanks = new ArrayList<Integer>();
+		for (Player player : players) {
+			try {
+				scoreSaberRanks.add(sapi.getScoreSaberRank(player.getUsername()));
+			} catch (IOException e) {
+				scoreSaberRanks.add(-1);
+				e.printStackTrace();
+			}
+		}
+		return scoreSaberRanks;
+	}
+	
+	private static List<Player> filterA(List<Player> players) {
+		return players.stream().filter(p -> p.getGroup().equals("A")).collect(Collectors.toList());
+	}
+	
+	private static List<Player> filterAA(List<Player> players) {
+		return players.stream().filter(p -> p.getGroup().equals("AA")).collect(Collectors.toList());	
+	}
+	
+	private static List<Player> filterIsParticipating(List<Player> players) {
+		return players.stream().filter(p -> p.isParticipating()).collect(Collectors.toList());
+	}
 }
