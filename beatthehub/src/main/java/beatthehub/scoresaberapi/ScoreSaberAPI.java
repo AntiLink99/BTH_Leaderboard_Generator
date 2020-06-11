@@ -64,6 +64,10 @@ public class ScoreSaberAPI {
 	
 	public int getScoreSaberRank(String playername) throws IOException {
 		String playerid = findPlayerIdForName(playername);
+		if (playerid == null) {
+			System.out.println("Player '"+playername+"' could not be found");
+			return -1;
+		}
 		ScoreSaberPlayer player = fetchPlayer(playerid);
 		return player.getPlayerInfo().getRank();
 	}

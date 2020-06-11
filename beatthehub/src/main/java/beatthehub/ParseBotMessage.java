@@ -143,6 +143,7 @@ public class ParseBotMessage {
                 double averageAcc = bestScores.stream().mapToDouble(sm -> Double.valueOf(sm.getAccuracy())).sum() / 6;
                 p.setAverageAcc(averageAcc);
             }
+            p.setScoreSaberRank(sapi.getScoreSaberRank(p.getUsername()));
         }
 
         long groupACount = filterA(players).size();
@@ -179,6 +180,7 @@ public class ParseBotMessage {
         metadata += "\n\n(You are participating if you have played all the qualifier maps.)";
         metadata += "\n\nMR = Mixed rank";
         metadata += "\nGR = Group rank";
+        metadata += "\nSSR = ScoreSaber rank";
         output += metadata;
         
         //Total score
@@ -189,7 +191,8 @@ public class ParseBotMessage {
 	        +fixedLength("Player",30)
 	        +fixedLength("Score",12)
 	        +fixedLength("Group",8)
-	        +"IsParticipating";
+	        +fixedLength("IsParticipating",18)
+	        +fixedLength("SSR",3);
         
         sortByTotalScore(players);
         for (Player player : players) {
@@ -202,12 +205,13 @@ public class ParseBotMessage {
             		.collect(Collectors.toList())
             		.indexOf(player)+1;
             
-            totalScoreInfo += "\n#"+fixedLength(String.valueOf(totalScoreRank),8)
-            	+"#"+fixedLength(String.valueOf(totalScoreGroupRank),8)
+            totalScoreInfo += "\n#"+fixedLength(totalScoreRank,8)
+            	+"#"+fixedLength(totalScoreGroupRank,8)
                 +fixedLength(username,30)
-                +fixedLength(String.valueOf(totalScore),12)
+                +fixedLength(totalScore,12)
                 +fixedLength(player.getGroup(),8)
-                +(player.isParticipating() ? "Participating" : "");
+                +fixedLength((player.isParticipating() ? "Participating" : ""),18)
+            	+"#"+fixedLength(player.getScoreSaberRank(),8);
         }
         output += totalScoreInfo;
         
@@ -218,7 +222,8 @@ public class ParseBotMessage {
 	    	+fixedLength("GR",9)
 	        +fixedLength("Player",30)
 	        +fixedLength("Accuracy",12)
-	        +fixedLength("Group",8);
+	        +fixedLength("Group",8)
+	        +fixedLength("SSR",15);
         
         sortByAverageAccuracy(players);
         for (Player player : players) {
@@ -235,15 +240,15 @@ public class ParseBotMessage {
         		.collect(Collectors.toList())
         		.indexOf(player)+1;
             
-            averageAccuracyInfo += "\n#"+fixedLength(String.valueOf(accuracyRank),8)
-        		+"#"+fixedLength(String.valueOf(accuracyGroupRank),8)
+            averageAccuracyInfo += "\n#"+fixedLength(accuracyRank,8)
+        		+"#"+fixedLength(accuracyGroupRank,8)
                 +fixedLength(username,30)
                 +fixedLength(accFormat.format(averageAcc)+"%",12)
-                +fixedLength(player.getGroup(),8);
+                +fixedLength(player.getGroup(),8)
+                +"#"+fixedLength(player.getScoreSaberRank(),8);
         }
         output += averageAccuracyInfo;
-        
-        
+       
         //Average rank [Participating]
         String averageInfo = "";
         averageInfo += header("Average rank (Participating only)");
@@ -267,7 +272,7 @@ public class ParseBotMessage {
         		.indexOf(player)+1;
             
             averageInfo += "\n#"+fixedLength(doubleFormat.format(filteredAverageRank),8)
-				+"#"+fixedLength(String.valueOf(averageRankFilteredGroupRank),8)
+				+"#"+fixedLength(averageRankFilteredGroupRank,8)
                 +fixedLength(username,27)
                 +fixedLength(formatRankedList(ranks,rankListFormat),40)
                 +fixedLength(player.getGroup(),5);
@@ -292,7 +297,7 @@ public class ParseBotMessage {
 	        		.indexOf(player)+1;
             
             averageInfo += "\n#"+fixedLength(doubleFormat.format(averageRank),8)
-				+"#"+fixedLength(String.valueOf(averageRankAllGroupRank),8)
+				+"#"+fixedLength(averageRankAllGroupRank,8)
                 +fixedLength(username,27)
                 +fixedLength(formatRankedList(ranks,rankListFormat),40)
                 +fixedLength(player.getGroup(),5)
@@ -312,9 +317,12 @@ public class ParseBotMessage {
     	        +fixedLength("Score",10)
     	        +fixedLength("Accuracy",12)
     	        +fixedLength("Group",9)
-    	        +"FullCombo";
-            
+    	        +fixedLength("FullCombo",12)
+    	        +fixedLength("SSR",6);
+
             for (ScoreSubmission sm : songSubmissions) {
+                Player pl = players.stream().filter(p -> p.getUsername().equals(sm.getUsername())).findFirst().get();
+                
                 int rank = songSubmissions.indexOf(sm)+1;
                 int groupRank = songSubmissions.stream().filter(s ->
                 	s.getTeam().equals(sm.getTeam()))
@@ -324,10 +332,11 @@ public class ParseBotMessage {
                 String songInfoLine = fixedLength("\n#"+rank,8)
             		+"#"+fixedLength(String.valueOf(groupRank),8)
                     +fixedLength(sm.getUsername(),28)
-                    +fixedLength(String.valueOf(sm.getScore()),10)
+                    +fixedLength(sm.getScore(),10)
                     +fixedLength(accFormat.format(sm.getAccuracy())+"%",12)
                     +fixedLength(sm.getTeam().toUpperCase(),9)
-                    +(sm.isFullCombo() ? "FC" : "");
+                    +fixedLength((sm.isFullCombo() ? "FC" : ""),12)
+                    +"#"+fixedLength(pl.getScoreSaberRank(),6);
                 songInfo += songInfoLine;
             }
         }
@@ -384,7 +393,7 @@ public class ParseBotMessage {
         Collections.sort(players,compareByAverageAcc);  
     }
     
-    private static String fixedLength(String str,int length) {
+    private static String fixedLength(Object str,int length) {
         return String.format("%0$-"+length+"s", str);
     }
     
@@ -416,16 +425,7 @@ public class ParseBotMessage {
 	}
 	
 	private static List<Integer> getScoreSaberRanks(List<Player> players) {		
-		List<Integer> scoreSaberRanks = new ArrayList<Integer>();
-		for (Player player : players) {
-			try {
-				scoreSaberRanks.add(sapi.getScoreSaberRank(player.getUsername()));
-			} catch (IOException e) {
-				scoreSaberRanks.add(-1);
-				e.printStackTrace();
-			}
-		}
-		return scoreSaberRanks;
+		return players.stream().map(p -> p.getScoreSaberRank()).collect(Collectors.toList());
 	}
 	
 	private static List<Player> filterA(List<Player> players) {
