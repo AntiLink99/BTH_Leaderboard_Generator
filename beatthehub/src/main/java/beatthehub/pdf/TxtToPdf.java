@@ -9,6 +9,7 @@ import com.itextpdf.text.Document;
 import com.itextpdf.text.DocumentException;
 import com.itextpdf.text.Element;
 import com.itextpdf.text.Font;
+import com.itextpdf.text.Image;
 import com.itextpdf.text.PageSize;
 import com.itextpdf.text.Paragraph;
 import com.itextpdf.text.pdf.BaseFont;
@@ -31,14 +32,26 @@ public class TxtToPdf {
 		
 		font.setStyle(Font.NORMAL);
 		font.setSize(10);
+
+		Image bthImage = Image.getInstance(ClassLoader.getSystemResource("src/main/resources/BTH.png"));
+		bthImage.setAbsolutePosition(456, 678);
+		bthImage.scaleAbsolute(100f,100f);
+		bthImage.setScaleToFitHeight(true);
 		
+	    boolean firstParagraph = true;    
 		BufferedReader br = new BufferedReader(new FileReader(basicFilePath+".txt"));
 		String strLine;
-		while ((strLine = br.readLine()) != null) {
+		while ((strLine = br.readLine()) != null) {			
+			pdfDoc.getPageNumber();
 		    Paragraph para = new Paragraph(strLine + "\n", font);
 		    para.setAlignment(Element.ALIGN_JUSTIFIED);
+		    
+		    if (firstParagraph) {
+			    para.add(bthImage);
+			    firstParagraph = false;
+		    }
 		    pdfDoc.add(para);
-		}   
+		}
 		pdfDoc.close();
 		br.close();
 	}

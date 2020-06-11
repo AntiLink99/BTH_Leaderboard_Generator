@@ -13,6 +13,8 @@ public class Player {
     private ArrayList<ScoreSubmission> bestScores = new ArrayList<ScoreSubmission>();
     private long totalScore = 0;
     private double averageAcc = 0;
+    private int scoreSaberRank = -1;
+    private boolean isBanned;
 
     public Player(String player, ArrayList<Integer> ranks) {
         this.player = player;
@@ -102,5 +104,21 @@ public class Player {
 
 	public void setGroup(String group) {
 		this.group = group;
+	}
+
+	public int getScoreSaberRank() {
+		return scoreSaberRank;
+	}
+
+	public void setScoreSaberRank(int scoreSaberRank) {
+		this.scoreSaberRank = scoreSaberRank;
+	}
+
+	public boolean isBanned() {
+		return isBanned;
+	}
+
+	public void setBanned(boolean isBanned) {
+		this.isBanned = isBanned;
 	}
 }
