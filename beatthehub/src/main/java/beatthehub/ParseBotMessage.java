@@ -33,6 +33,8 @@ public class ParseBotMessage {
 	static ScoreSaberAPI sapi;
 	static TournamentAPI tapi;
 	
+	static List<String> bannedPlayernames;
+	
     final static String LINE = "-------------------------------------------------------------------------------------------";
 	
     public static void main(String[] args) throws IOException {
@@ -47,6 +49,8 @@ public class ParseBotMessage {
     	tapi = new TournamentAPI();
     	tapi.fetchAPIData();
         
+    	bannedPlayernames = Blacklist.getBannedPlayernames();
+
         DecimalFormatSymbols seperator = new DecimalFormatSymbols(Locale.GERMAN);
         seperator.setDecimalSeparator('.');
         DecimalFormat doubleFormat = new DecimalFormat("0.00",seperator);
@@ -136,7 +140,7 @@ public class ParseBotMessage {
             }
         }
         
-        //Set average accuracy for every player
+        //Set average accuracy, SS rank and isBanned for every player
         for (Player p : players) {
             if (p.isParticipating()) {
                 ArrayList<ScoreSubmission> bestScores = p.getBestScores();
@@ -144,40 +148,46 @@ public class ParseBotMessage {
                 p.setAverageAcc(averageAcc);
             }
             p.setScoreSaberRank(sapi.getScoreSaberRank(p.getUsername()));
+            p.setBanned(bannedPlayernames.contains(p.getUsername()));
         }
 
-        long groupACount = filterA(players).size();
-        long groupAACount = filterAA(players).size();
-        long groupAParticipatingCount = filterIsParticipating(filterA(players)).size();
-        long groupAAParticipatingCount = filterIsParticipating(filterAA(players)).size();
+        final List<Player> listedPlayers = filterNotBanned(players);
+
+        long groupACount = filterA(listedPlayers).size();
+        long groupAACount = filterAA(listedPlayers).size();
+        long groupAParticipatingCount = filterIsParticipating(filterA(listedPlayers)).size();
+        long groupAAParticipatingCount = filterIsParticipating(filterAA(listedPlayers)).size();
         
         //Build leaderboard        
         String output = "";
         
-        //Build metadata
+        //Build metadata (Excludes banned players)
         String metadata = "";
         OffsetDateTime utc = OffsetDateTime.now(ZoneOffset.UTC);
         metadata += "Parsed on "+utc.format(DateTimeFormatter.ofPattern("dd.MM HH:mm"))+" (UTC)";
         metadata += fixedLength("",45)+"Made by AntiLink99#1337\n";
         metadata += "\nTotal scores: "+submissions.size();
-        metadata += "\nPlayers: "+players.size();
-        metadata += "\nParticipating players: "+filterIsParticipating(players).size();
+        metadata += "\nPlayers: "+listedPlayers.size();
+        metadata += "\nParticipating players: "+filterIsParticipating(listedPlayers).size();
+        metadata += "\nPlayers on blacklist: "+bannedPlayernames.size();
         
         metadata += "\n\nPlayers in group A: "+groupACount;
         metadata += "\nParticipating players in group A: "+groupAParticipatingCount;
+        
         metadata += "\n\nPlayers in group AA: "+groupAACount;
         metadata += "\nParticipating players in group AA: "+groupAAParticipatingCount;
       
-        sortByAverageAccuracy(players);        
-    	List<Integer> scoreSaberRanksA = getScoreSaberRanks(filterA(players).subList(0, 63));
+        sortByAverageAccuracy(listedPlayers);        
+    	List<Integer> scoreSaberRanksA = getScoreSaberRanks(filterA(listedPlayers).subList(0, 63));
     	Collections.sort(scoreSaberRanksA);    	
-    	List<Integer> scoreSaberRanksAA = getScoreSaberRanks(filterAA(players).subList(0, 31));
+    	List<Integer> scoreSaberRanksAA = getScoreSaberRanks(filterAA(listedPlayers).subList(0, 31));
     	Collections.sort(scoreSaberRanksAA);
     	
         metadata += "\n\nMedian ScoreSaber rank of qualified players in group A: "+getMedianOfIntegers(scoreSaberRanksA);
         metadata += "\nMedian ScoreSaber rank of qualified players in group AA: "+getMedianOfIntegers(scoreSaberRanksAA);
         
         metadata += "\n\n(You are participating if you have played all the qualifier maps.)";
+        
         metadata += "\n\nMR = Mixed rank";
         metadata += "\nGR = Group rank";
         metadata += "\nSSR = ScoreSaber rank";
@@ -194,13 +204,13 @@ public class ParseBotMessage {
 	        +fixedLength("IsParticipating",18)
 	        +fixedLength("SSR",3);
         
-        sortByTotalScore(players);
-        for (Player player : players) {
+        sortByTotalScore(listedPlayers);
+        for (Player player : listedPlayers) {
             String username = player.getUsername();
             long totalScore = player.getTotalScore();
             
-            int totalScoreRank = players.indexOf(player)+1;
-            int totalScoreGroupRank = players.stream().filter(p ->
+            int totalScoreRank = listedPlayers.indexOf(player)+1;
+            int totalScoreGroupRank = listedPlayers.stream().filter(p ->
             	p.getGroup().equals(player.getGroup()))
             		.collect(Collectors.toList())
             		.indexOf(player)+1;
@@ -225,8 +235,8 @@ public class ParseBotMessage {
 	        +fixedLength("Group",8)
 	        +fixedLength("SSR",15);
         
-        sortByAverageAccuracy(players);
-        for (Player player : players) {
+        sortByAverageAccuracy(listedPlayers);
+        for (Player player : listedPlayers) {
             String username = player.getUsername();
             double averageAcc = player.getAverageAcc();
             
@@ -234,8 +244,8 @@ public class ParseBotMessage {
                 continue;
             }
             
-            int accuracyRank = players.indexOf(player)+1;
-            int accuracyGroupRank = players.stream().filter(p ->
+            int accuracyRank = listedPlayers.indexOf(player)+1;
+            int accuracyGroupRank = listedPlayers.stream().filter(p ->
         	p.getGroup().equals(player.getGroup()))
         		.collect(Collectors.toList())
         		.indexOf(player)+1;
@@ -258,15 +268,15 @@ public class ParseBotMessage {
 	        +fixedLength("Ranks",40)
 	        +fixedLength("Group",8);
         
-        sortByFilteredAverageRank(players);        
-        for (Player player : players) {
+        sortByFilteredAverageRank(listedPlayers);        
+        for (Player player : listedPlayers) {
             String username = player.getUsername();
             ArrayList<Integer> ranks = player.getFilteredRanks();
             if (ranks == null || !player.isParticipating()) {
                 continue;
             }
             double filteredAverageRank = player.getFilteredAverageRank();
-            int averageRankFilteredGroupRank = players.stream().filter(p ->
+            int averageRankFilteredGroupRank = listedPlayers.stream().filter(p ->
         		p.getGroup().equals(player.getGroup()))
         		.collect(Collectors.toList())
         		.indexOf(player)+1;
@@ -285,13 +295,13 @@ public class ParseBotMessage {
 	        +fixedLength("Player",27)
 	        +fixedLength("Ranks",34);
 
-        sortByAverageRank(players);
-        for (Player player : players) {
+        sortByAverageRank(listedPlayers);
+        for (Player player : listedPlayers) {
             String username = player.getUsername();
             ArrayList<Integer> ranks = player.getRanks();
             
             double averageRank = player.getAverageRank();
-            int averageRankAllGroupRank = players.stream().filter(p ->
+            int averageRankAllGroupRank = listedPlayers.stream().filter(p ->
 	        	p.getGroup().equals(player.getGroup()))
 	        		.collect(Collectors.toList())
 	        		.indexOf(player)+1;
@@ -305,7 +315,7 @@ public class ParseBotMessage {
         }        
         output += averageInfo;
         
-        //Song leaderboards
+        //Song leaderboards (Includes banned players)
         String songInfo = "";
         for (Entry<String, List<ScoreSubmission>> set : submissionsBySong.entrySet()) {
             List<ScoreSubmission> songSubmissions = set.getValue();
@@ -358,13 +368,13 @@ public class ParseBotMessage {
         System.exit(0);
     }
 
-	private static void sortByAverageRank(ArrayList<Player> players) {
+	private static void sortByAverageRank(List<Player> players) {
         Comparator<Player> compareByAverageRank = (Player p1, Player p2) ->
             p1.getAverageRank() > p2.getAverageRank() ? 1 : -1;
         Collections.sort(players,compareByAverageRank);    
     }
     
-    private static void sortByFilteredAverageRank(ArrayList<Player> players) {
+    private static void sortByFilteredAverageRank(List<Player> players) {
         Comparator<Player> compareByFilteredAverage = (Player p1, Player p2) -> {
         	if (!p1.isParticipating()) {
         		return 1;
@@ -381,13 +391,13 @@ public class ParseBotMessage {
         Collections.sort(players,compareByFilteredAverage);    
     }
 
-    private static void sortByTotalScore(ArrayList<Player> players) {
+    private static void sortByTotalScore(List<Player> players) {
         Comparator<Player> compareByTotalScore = (Player p1, Player p2) ->
         p1.getTotalScore() < p2.getTotalScore() ? 1 : -1;
         Collections.sort(players,compareByTotalScore);
     }
     
-    private static void sortByAverageAccuracy(ArrayList<Player> players) {
+    private static void sortByAverageAccuracy(List<Player> players) {
         Comparator<Player> compareByAverageAcc = (Player p1, Player p2) ->
             p1.getAverageAcc() < p2.getAverageAcc() ? 1 : -1;
         Collections.sort(players,compareByAverageAcc);  
@@ -438,5 +448,9 @@ public class ParseBotMessage {
 	
 	private static List<Player> filterIsParticipating(List<Player> players) {
 		return players.stream().filter(p -> p.isParticipating()).collect(Collectors.toList());
+	}
+	
+	private static List<Player> filterNotBanned(List<Player> players) {
+		return players.stream().filter(p -> !p.isBanned()).collect(Collectors.toList());
 	}
 }

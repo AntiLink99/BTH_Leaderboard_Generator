@@ -14,7 +14,7 @@ public class Player {
     private long totalScore = 0;
     private double averageAcc = 0;
     private int scoreSaberRank = -1;
-    private boolean isBanned;
+    private boolean isBanned = false;
 
     public Player(String player, ArrayList<Integer> ranks) {
         this.player = player;
